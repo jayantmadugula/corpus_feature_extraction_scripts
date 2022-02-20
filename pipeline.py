@@ -26,14 +26,42 @@ class Pipeline():
         self._feature_extraction_fn = feature_extraction_fn
         self._post_extraction_fns = post_extraction_fns
 
-    def _process(self, df: pd.DataFrame) -> None:
+    def _process(self, df: pd.DataFrame) -> pd.DataFrame:
         print(f'Processing DataFrame with shape: {df.shape}')
+        # Run pre-extraction functions.
+        for fn in self._pre_extraction_fns:
+            try:
+                df = fn(df)
+            except BaseException:
+                print(f'Pre-extraction function {fn.__name__} failed with an unexpected error.')
+                raise
+        
+        # Run feature extraction function.
+        try:
+            self._feature_extraction_fn(df)
+        except BaseException:
+            print(f'Feature extraction function {self._feature_extraction_fn.__name__} failed with an unexpected error.')
+            raise
+
+        # Run post-extraction functions.
+        for fn in self._post_extraction_fns:
+            try:
+                df = fn(df)
+            except BaseException:
+                print(f'Post-extraction function {fn.__name__} failed with an unexpected error.')
+                raise
+
+        return df
 
     def start(self):
         for (i, current_df) in enumerate(self._data_generator):
             # TODO: Multi-processing happens here, _process() handles a single DataFrame
-            self._process(current_df)
+            
+            processed_df = self._process(current_df)
+            self._data_save_fn(processed_df)
+
             print(f'Pipeline step {i} complete.')
+        
         print('Pipeline complete.')
 
 
@@ -46,5 +74,5 @@ if __name__ == '__main__':
         chunksize=100)
     print(type(x))
 
-    p = Pipeline(x, None, [], None, [])
+    p = Pipeline(x, lambda f: None, [], lambda j: None, [])
     p.start()
