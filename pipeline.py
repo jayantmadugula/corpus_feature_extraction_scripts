@@ -1,4 +1,4 @@
-from typing import Callable, Iterable
+from typing import Callable, Iterable, List
 import pandas as pd
 import sqlite3
 
@@ -14,17 +14,19 @@ class Pipeline():
 
     def __init__(
         self,
-        data_generator: Iterable[pd.DataFrame],
         data_save_fn: Callable[[pd.DataFrame], None],
         pre_extraction_fns: Iterable[Callable[[pd.DataFrame], pd.DataFrame]],
         feature_extraction_fn: Callable[[pd.DataFrame], pd.DataFrame],
-        post_extraction_fns: Iterable[Callable[[pd.DataFrame], pd.DataFrame]]
+        post_extraction_fns: Iterable[Callable[[pd.DataFrame], pd.DataFrame]],
+        **kwargs
         ):
-        self._data_generator = data_generator
         self._data_save_fn = data_save_fn
         self._pre_extraction_fns = pre_extraction_fns
         self._feature_extraction_fn = feature_extraction_fn
         self._post_extraction_fns = post_extraction_fns
+
+        # Process additional keyword arguments.
+        self._batch_size = kwargs['batch_size'] if 'batch_size' in kwargs else None
 
     def _process(self, df: pd.DataFrame) -> pd.DataFrame:
         print(f'Processing DataFrame with shape: {df.shape}')
@@ -53,8 +55,8 @@ class Pipeline():
 
         return df
 
-    def start(self):
-        for (i, current_df) in enumerate(self._data_generator):
+    def start(self, df_generator: Iterable[pd.DataFrame]):
+        for (i, current_df) in enumerate(df_generator):
             # TODO: Multi-processing happens here, _process() handles a single DataFrame
             
             processed_df = self._process(current_df)
@@ -74,5 +76,6 @@ if __name__ == '__main__':
         chunksize=100)
     print(type(x))
 
-    p = Pipeline(x, lambda f: None, [], lambda j: None, [])
-    p.start()
+    p = Pipeline(lambda f: None, [], lambda j: None, [])
+    p.start(x)
+    print(p._batch_size)
