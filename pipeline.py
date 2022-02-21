@@ -55,10 +55,25 @@ class Pipeline():
 
         return df
 
+    def _split_df(self, df: pd.DataFrame) -> List[pd.DataFrame]:
+        '''
+        Splits a DataFrame into batches based on the Pipeline's batch size.
+        '''
+        if self._batch_size is None or self._batch_size >= df.shape[0]: return [df]
+
+        batched_dfs = []
+        for i in range(self._batch_size, df.shape[0], self._batch_size):
+            batched_dfs.append(df.iloc[i - self._batch_size:i])
+        batched_dfs.append(df.iloc[i:])
+        
+        return batched_dfs
+
     def start(self, df_generator: Iterable[pd.DataFrame]):
         for (i, current_df) in enumerate(df_generator):
+            batched_dfs = self._split_df(current_df)
             # TODO: Multi-processing happens here, _process() handles a single DataFrame
-            
+            # num processes == len(batched_dfs)
+
             processed_df = self._process(current_df)
             self._data_save_fn(processed_df)
 
@@ -76,6 +91,6 @@ if __name__ == '__main__':
         chunksize=100)
     print(type(x))
 
-    p = Pipeline(lambda f: None, [], lambda j: None, [])
+    p = Pipeline(lambda f: None, [], lambda j: None, [], batch_size=9)
     p.start(x)
     print(p._batch_size)
