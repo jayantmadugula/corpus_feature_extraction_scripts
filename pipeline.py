@@ -1,3 +1,4 @@
+from multiprocessing import Pool
 from typing import Callable, Iterable, List
 import pandas as pd
 import sqlite3
@@ -27,6 +28,7 @@ class Pipeline():
 
         # Process additional keyword arguments.
         self._batch_size = kwargs['batch_size'] if 'batch_size' in kwargs else None
+        self._num_processes = kwargs['num_processes'] if 'num_processes' in kwargs else None
 
     def _process(self, df: pd.DataFrame) -> pd.DataFrame:
         print(f'Processing DataFrame with shape: {df.shape}')
@@ -71,26 +73,16 @@ class Pipeline():
     def start(self, df_generator: Iterable[pd.DataFrame]):
         for (i, current_df) in enumerate(df_generator):
             batched_dfs = self._split_df(current_df)
-            # TODO: Multi-processing happens here, _process() handles a single DataFrame
-            # num processes == len(batched_dfs)
+            pool_size = self._num_processes if self._num_processes is not None else len(batched_dfs)
+            with Pool(pool_size) as p:
+                batched_result_dfs = p.map(
+                    self._feature_extraction_fn,
+                    batched_dfs
+                )
 
-            processed_df = self._process(current_df)
+            processed_df = pd.concat(batched_result_dfs, ignore_index=True, axis=0)
             self._data_save_fn(processed_df)
 
             print(f'Pipeline step {i} complete.')
         
         print('Pipeline complete.')
-
-
-if __name__ == '__main__':
-    sqlite_conn = sqlite3.connect('../databases/corpus_database.db')
-    x = pd.read_sql(
-        sql='SELECT * FROM semeval16_reviews', 
-        con=sqlite_conn,
-        index_col='index',
-        chunksize=100)
-    print(type(x))
-
-    p = Pipeline(lambda f: None, [], lambda j: None, [], batch_size=9)
-    p.start(x)
-    print(p._batch_size)
