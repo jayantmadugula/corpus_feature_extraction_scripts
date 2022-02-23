@@ -1,5 +1,5 @@
 from multiprocessing import Pool
-from typing import Callable, Iterable, List
+from typing import Callable, Iterable, Iterator, List
 import pandas as pd
 import sqlite3
 
@@ -70,8 +70,18 @@ class Pipeline():
         
         return batched_dfs
 
-    def start(self, df_generator: Iterable[pd.DataFrame]):
+    def start(
+        self, 
+        df_generator: Iterable[pd.DataFrame], 
+        additional_df_generators: Iterable[Iterator[pd.DataFrame]] = []):
         for (i, current_df) in enumerate(df_generator):
+            if len(additional_df_generators) > 0:
+                # Join all DataFrames by index
+                current_additional_dfs = list(map(next, additional_df_generators))
+                current_df = current_df.join(
+                    current_additional_dfs,
+                    how='inner')
+
             batched_dfs = self._split_df(current_df)
             pool_size = self._num_processes if self._num_processes is not None else len(batched_dfs)
             with Pool(pool_size) as p:
