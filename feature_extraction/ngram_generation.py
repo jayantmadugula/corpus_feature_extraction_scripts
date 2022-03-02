@@ -18,15 +18,17 @@ def generate_ngrams(doc: sp_Doc, n=2, pad_word='inv', idx_filter=None) -> list[s
 
     `pad_word` is the word used for padding.
 
-    `pos_filter` can either be None or a list of indices indicating
-    where words of interest are located in the text
+    `idx_filter` can either be None or a list of valid indices (for `doc`).
+    
+    If `idx_filter` is provided, only ngrams centered on words
+    at the provided indices are created.
     '''
     ngrams = []
     if idx_filter is not None:
-        # pos_filter must be a list of indices
+        # idx_filter must be a list of indices
         iter_range = idx_filter
     else:
-        # no part-of-speech filtering, iterate over every word
+        # no index filtering, iterate over every word
         iter_range = range(0, len(doc))
 
     for i in iter_range:
