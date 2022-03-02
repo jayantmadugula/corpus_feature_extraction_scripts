@@ -1,5 +1,5 @@
 import unittest
-from feature_extraction import ngram_generation
+from processing_functions import ngram_generation
 from utilities.spacy_utilities import Spacy_Manager
 
 class NgramGenerationTests(unittest.TestCase):
