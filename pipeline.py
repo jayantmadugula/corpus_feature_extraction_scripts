@@ -1,7 +1,6 @@
 from multiprocessing import Pool
 from typing import Callable, Iterable, Iterator, List
 import pandas as pd
-import sqlite3
 
 class Pipeline():
     '''
@@ -40,12 +39,16 @@ class Pipeline():
                 print(f'Pre-extraction function {fn.__name__} failed with an unexpected error.')
                 raise
         
-        # Run feature extraction function.
-        try:
-            self._feature_extraction_fn(df)
-        except BaseException:
-            print(f'Feature extraction function {self._feature_extraction_fn.__name__} failed with an unexpected error.')
-            raise
+        # Run feature extraction function using multiprocessing.
+        batched_dfs = self._split_df(df)
+        pool_size = self._num_processes if self._num_processes is not None else 1
+        with Pool(pool_size) as p:
+            try:
+                res = p.map(self._feature_extraction_fn, batched_dfs)
+            except BaseException:
+                print(f'Feature extraction function {self._feature_extraction_fn.__name__} failed with an unexpected error.')
+                raise
+        df = pd.concat(res, ignore_index=True, axis=0)
 
         # Run post-extraction functions.
         for fn in self._post_extraction_fns:
@@ -82,15 +85,7 @@ class Pipeline():
                     current_additional_dfs,
                     how='inner')
 
-            batched_dfs = self._split_df(current_df)
-            pool_size = self._num_processes if self._num_processes is not None else len(batched_dfs)
-            with Pool(pool_size) as p:
-                batched_result_dfs = p.map(
-                    self._feature_extraction_fn,
-                    batched_dfs
-                )
-
-            processed_df = pd.concat(batched_result_dfs, ignore_index=True, axis=0)
+            processed_df = self._process(current_df)
             self._data_save_fn(processed_df)
 
             print(f'Pipeline step {i} complete.')
