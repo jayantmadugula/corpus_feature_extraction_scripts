@@ -1,0 +1,10 @@
+{
+    "num_processes": 2,
+    "batch_size": 1000,
+    "restaurant_reviews": {
+        "database_path": "../databases/corpus_database.db",
+        "text_table_name": "restaurantreviews_reviews",
+        "text_column_name": "review",
+        "restaurant_id_column_name": "id"
+    }
+}
