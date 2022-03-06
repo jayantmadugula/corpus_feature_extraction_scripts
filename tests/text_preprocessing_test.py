@@ -44,3 +44,15 @@ class TextPreprocessingTests(unittest.TestCase):
             "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
         ])
         assert((result == expected).all())
+
+    def test_remove_stopwords(self):
+        test_df = pd.Series([
+            "This is a random test sentence and it contains some stopwords.",
+            "Here's another random test sentence, it also includes a few stopwords."
+        ])
+        result = text_preprocessing.remove_stopwords(test_df)
+        expected = pd.Series([
+            "This random test sentence contains stopwords.",
+            "Here's another random test sentence, also includes stopwords."
+        ])
+        assert((result == expected).all())
