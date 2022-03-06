@@ -3,6 +3,31 @@ These functions are used to create ngrams from
 a generic input text dataset.
 '''
 from spacy.tokens.doc import Doc as sp_Doc
+from utilities.spacy_utilities import Spacy_Manager
+import pandas as pd
+
+def generate_corpus_ngrams(texts: pd.Series, n=2, pad_word='inv'):
+    '''
+    Manages ngram generation across a set of texts. These texts
+    should be passed in as a `pd.Series` object.
+
+    Returns a `pd.Series` of ngrams. Each entry in the Series is a ngram. The id of the corresponding sentence is included. 
+    The number of these entries is equal to `len(texts)`.
+
+    Return schema:
+    - `ngram`
+    - `sent_id`: the index of the sentence the ngram was 
+    extracted from
+    '''
+    sp_docs = Spacy_Manager.generate_docs(texts)
+
+    ngrams = []
+    for d, sent_id in zip(sp_docs, texts.index):
+        text_ngrams = generate_ngrams(d, n=n, pad_word=pad_word, idx_filter=None)
+        sent_ids = [sent_id] * len(text_ngrams)
+        ngrams.append(pd.DataFrame({'ngram': text_ngrams, 'sent_id': sent_ids}))
+    
+    return pd.concat(ngrams, ignore_index=True)
 
 def generate_ngrams(doc: sp_Doc, n=2, pad_word='inv', idx_filter=None) -> list[str]:
     '''

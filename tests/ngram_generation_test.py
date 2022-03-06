@@ -1,6 +1,7 @@
 import unittest
 from processing_functions import ngram_generation
 from utilities.spacy_utilities import Spacy_Manager
+import pandas as pd
 
 class NgramGenerationTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -11,6 +12,11 @@ class NgramGenerationTests(unittest.TestCase):
         ]
         self.test_docs = list(Spacy_Manager.generate_docs(self.test_strings))
         return super().setUp()
+
+    def test_generate_corpus_ngrams(self):
+        result = ngram_generation.generate_corpus_ngrams(pd.Series(self.test_strings))
+        assert(result.shape[0] == sum([len(x.split()) for x in self.test_strings]))
+        assert(result.index[0] == 0 and result.index[-1] == sum([len(x.split()) for x in self.test_strings]) - 1)
 
     def test_ngram_generation_at_position_no_padding(self):
         result = ngram_generation.generate_ngram_at_position(self.test_docs[0], 3)
