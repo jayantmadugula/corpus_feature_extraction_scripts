@@ -1,6 +1,8 @@
 from multiprocessing import Pool
 from typing import Callable, Iterable, Iterator, List
 import pandas as pd
+from spacy.tokens.doc import Doc as sp_Doc
+from utilities.spacy_utilities import Spacy_Manager
 
 class Pipeline():
     '''
@@ -72,6 +74,16 @@ class Pipeline():
         batched_dfs.append(df.iloc[i:])
         
         return batched_dfs
+
+    def _split_sp_docs(self, docs: sp_Doc) -> List[sp_Doc]:
+        if self._batch_size is None or self._batch_size >= len(docs): return [docs]
+
+        batched_docs = []
+        for i in range(self._batch_size, len(docs), self._batch_size):
+            batched_docs.append(docs[i - self._batch_size:i])
+        batched_docs.append(docs[i:])
+
+        return batched_docs
 
     def start(
         self, 

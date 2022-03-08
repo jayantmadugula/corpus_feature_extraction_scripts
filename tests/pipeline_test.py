@@ -1,6 +1,9 @@
+import math
 import unittest
 from pipeline import Pipeline
 import pandas as pd
+
+from utilities.spacy_utilities import Spacy_Manager
 
 class PipelineTests(unittest.TestCase):
     # Set up and helper functions
@@ -95,3 +98,49 @@ class PipelineTests(unittest.TestCase):
         )
         p.start([self.test_df.copy(deep=True)], [iter([self.secondary_test_df.copy(deep=True)])])
             
+    def test_split_df(self):
+        batch_size = 4
+        p = Pipeline(
+            data_save_fn=None,
+            pre_extraction_fns=[],
+            feature_extraction_fn=PipelineTests.simple_extraction_fn,
+            post_extraction_fns=[],
+            text_column_name='',
+            ngram_column_name='',
+            batch_size=batch_size
+        )
+
+        res = p._split_df(self.test_df)
+        res_concat = pd.concat(res, axis=0, ignore_index=True)
+        assert(len(res) == math.ceil(self.test_df.shape[0] / batch_size))
+        assert(sum([len(x) for x in res]) == self.test_df.shape[0])
+        assert(res_concat.shape[0] == self.test_df.shape[0])
+        assert(res_concat.shape[1] == self.test_df.shape[1])
+        assert((res_concat == self.test_df).all(axis=None))
+            
+    def test_split_sp_docs(self):
+        batch_size = 4
+        test_sp_docs = list(Spacy_Manager.generate_docs([
+            "Lorem ipsum dolor sit amet consectetur adipiscing",
+            "elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+            "Ut enim ad minim veniam quis nostrud exercitation",
+            "ullamco laboris nisi ut aliquip ex ea commodo consequat",
+            "Duis aute irure dolor in reprehenderit in voluptate",
+            "velit esse cillum dolore eu fugiat nulla pariatur"
+        ]))
+
+        p = Pipeline(
+            data_save_fn=None,
+            pre_extraction_fns=[],
+            feature_extraction_fn=PipelineTests.simple_extraction_fn,
+            post_extraction_fns=[],
+            text_column_name='',
+            ngram_column_name='',
+            batch_size=batch_size
+        )
+
+        res = p._split_sp_docs(test_sp_docs)
+        assert(len(res) == math.ceil(len(test_sp_docs) / batch_size))
+        assert(sum([len(x) for x in res]) == len(test_sp_docs))
+
+        
