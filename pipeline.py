@@ -20,29 +20,39 @@ class Pipeline():
         pre_extraction_fns: Iterable[Callable[[pd.DataFrame], pd.DataFrame]],
         feature_extraction_fn: Callable[[pd.DataFrame], pd.DataFrame],
         post_extraction_fns: Iterable[Callable[[pd.DataFrame], pd.DataFrame]],
+        text_column_name: str,
+        ngram_column_name: str,
         **kwargs
         ):
         self._data_save_fn = data_save_fn
         self._pre_extraction_fns = pre_extraction_fns
         self._feature_extraction_fn = feature_extraction_fn
         self._post_extraction_fns = post_extraction_fns
+        self._input_column_name = text_column_name
+        self._feature_column_name = ngram_column_name
 
         # Process additional keyword arguments.
         self._batch_size = kwargs['batch_size'] if 'batch_size' in kwargs else None
         self._num_processes = kwargs['num_processes'] if 'num_processes' in kwargs else None
+        self._use_spacy = kwargs['use_spacy'] if 'use_spacy' in kwargs else False
 
     def _process(self, df: pd.DataFrame) -> pd.DataFrame:
         print(f'Processing DataFrame with shape: {df.shape}')
         # Run pre-extraction functions.
         for fn in self._pre_extraction_fns:
             try:
-                df = fn(df)
+                df.loc[:, self._input_column_name] = fn(df.loc[:, self._input_column_name])
             except BaseException:
                 print(f'Pre-extraction function {fn.__name__} failed with an unexpected error.')
                 raise
         
         # Run feature extraction function using multiprocessing.
+        if self._use_spacy:
+            # TODO Investigate taking advantage of spaCy's Doc generator.
+            docs_col_name = '{}_spdocs'.format(self._input_column_name)
+            df.loc[:, docs_col_name] = list(Spacy_Manager.generate_docs(df.loc[:, self._input_column_name]))
         batched_dfs = self._split_df(df)
+        
         pool_size = self._num_processes if self._num_processes is not None else 1
         with Pool(pool_size) as p:
             try:
@@ -50,12 +60,12 @@ class Pipeline():
             except BaseException:
                 print(f'Feature extraction function {self._feature_extraction_fn.__name__} failed with an unexpected error.')
                 raise
-        df = pd.concat(res, ignore_index=True, axis=0)
+        feature_df = pd.concat(res, ignore_index=True, axis=0)
 
         # Run post-extraction functions.
         for fn in self._post_extraction_fns:
             try:
-                df = fn(df)
+                feature_df.loc[:, self._feature_column_name] = fn(feature_df.loc[:, self._feature_column_name])
             except BaseException:
                 print(f'Post-extraction function {fn.__name__} failed with an unexpected error.')
                 raise
@@ -74,16 +84,6 @@ class Pipeline():
         batched_dfs.append(df.iloc[i:])
         
         return batched_dfs
-
-    def _split_sp_docs(self, docs: sp_Doc) -> List[sp_Doc]:
-        if self._batch_size is None or self._batch_size >= len(docs): return [docs]
-
-        batched_docs = []
-        for i in range(self._batch_size, len(docs), self._batch_size):
-            batched_docs.append(docs[i - self._batch_size:i])
-        batched_docs.append(docs[i:])
-
-        return batched_docs
 
     def start(
         self, 
