@@ -20,9 +20,9 @@ def load_df(conn: sqlite3.Connection, table_name: str, index_col = 'index', chun
         index_col = index_col,
         chunksize = chunksize)
 
-def save_df(conn: sqlite3.Connection, df: pd.DataFrame, table_name: str):
+def save_df(df: pd.DataFrame, conn: sqlite3.Connection, table_name: str):
     '''
     Saves incoming `pd.DataFrame` to a SQLite3 database.
-    If the table already exists, it will be overwritten.
+    If the table already exists, it will be appended to.
     '''
-    df.to_sql(table_name, conn, if_exists='replace')
+    df.to_sql(table_name, conn, if_exists='append')
