@@ -70,7 +70,7 @@ class Pipeline():
                 print(f'Post-extraction function {fn.__name__} failed with an unexpected error.')
                 raise
 
-        return df
+        return feature_df
 
     def _split_df(self, df: pd.DataFrame) -> List[pd.DataFrame]:
         '''
