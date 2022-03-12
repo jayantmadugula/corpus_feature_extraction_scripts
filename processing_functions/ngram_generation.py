@@ -6,7 +6,7 @@ from spacy.tokens.doc import Doc as sp_Doc
 from utilities.spacy_utilities import Spacy_Manager
 import pandas as pd
 
-def generate_corpus_ngrams(texts: pd.Series, n=2, pad_word='inv'):
+def generate_corpus_ngrams(input_df: pd.DataFrame, col_name: str, n=2, pad_word='inv'):
     '''
     Manages ngram generation across a set of texts. These texts
     should be passed in as a `pd.Series` object.
@@ -19,10 +19,10 @@ def generate_corpus_ngrams(texts: pd.Series, n=2, pad_word='inv'):
     - `sent_id`: the index of the sentence the ngram was 
     extracted from
     '''
-    sp_docs = Spacy_Manager.generate_docs(texts)
+    sp_docs = input_df.loc[:, col_name]
 
     ngrams = []
-    for d, sent_id in zip(sp_docs, texts.index):
+    for d, sent_id in zip(sp_docs, input_df.index):
         text_ngrams = generate_ngrams(d, n=n, pad_word=pad_word, idx_filter=None)
         sent_ids = [sent_id] * len(text_ngrams)
         ngrams.append(pd.DataFrame({'ngram': text_ngrams, 'sent_id': sent_ids}))
