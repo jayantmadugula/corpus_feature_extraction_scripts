@@ -28,6 +28,20 @@ if __name__ == '__main__':
     table_name = params['restaurant_reviews']['text_table_name']
 
     window_len = 2 # len(ngram) = (2 * window_len) + 1
+    output_table_name = f'restaurantreviews_n={window_len}'
+
+    # Logging
+    log_dict = dict()
+    log_dict['Pipeline Input'] = {
+        'Database Path': database_path,
+        'Table Name': table_name
+    }
+    log_dict['ngram Size'] = f'{window_len}'
+
+    log_dict['Pipeline Output'] = {
+        'Table Name', output_table_name
+    }
+    run_name = output_table_name
 
     # Get data iterator.
     conn = sqlite3.connect(database_path)
@@ -38,7 +52,7 @@ if __name__ == '__main__':
     ngram_extraction_fn = partial(ngram_generation.generate_corpus_ngrams, col_name='review_spdocs', n=window_len)
     ngram_extraction_fn.__name__ = ngram_generation.generate_corpus_ngrams.__name__
 
-    partial_save_fn = partial(save_df, conn=conn, table_name='test_table')
+    partial_save_fn = partial(save_df, conn=conn, table_name=output_table_name)
     partial_save_fn.__name__ = save_df.__name__
 
     p = Pipeline(
@@ -54,7 +68,9 @@ if __name__ == '__main__':
         ngram_column_name='ngram',
         batch_size=batch_size,
         num_processes=n_processes,
-        use_spacy=True
+        use_spacy=True,
+        log_dict=log_dict,
+        run_name=run_name
     )
     p.start(sql_iter)
 
