@@ -1,9 +1,12 @@
+import json
 from multiprocessing import Pool
+import datetime
 from typing import Callable, Iterable, Iterator, List
 import pandas as pd
-from spacy.tokens.doc import Doc as sp_Doc
 from utilities.spacy_utilities import Spacy_Manager
+from utilities.logging_utilities import get_fn_name
 
+DEFAULT_OUTPUT_LOG_PATH = './pipeline_log.json'
 class Pipeline():
     '''
     This class defines a Pipeline object that uses generators
@@ -35,6 +38,12 @@ class Pipeline():
         self._batch_size = kwargs['batch_size'] if 'batch_size' in kwargs else None
         self._num_processes = kwargs['num_processes'] if 'num_processes' in kwargs else None
         self._use_spacy = kwargs['use_spacy'] if 'use_spacy' in kwargs else False
+
+        # Logging
+        self._log_path: str = kwargs['log_filepath'] if 'log_filepath' in kwargs else DEFAULT_OUTPUT_LOG_PATH
+        self._pipeline_log: dict[str, str] = kwargs['log_dict'] if 'log_dict' in kwargs else {'Pipeline Input': 'None'}
+        self._run_name: str = kwargs['run_name'] if 'run_name' in kwargs else str(datetime.datetime.now())
+        self._create_log()
 
     def _process(self, df: pd.DataFrame) -> pd.DataFrame:
         print(f'Processing DataFrame with shape: {df.shape}')
@@ -103,3 +112,36 @@ class Pipeline():
             print(f'Pipeline step {i} complete.')
         
         print('Pipeline complete.')
+        self._save_log()
+
+    # Logging
+    def _create_log(self):
+        self._pipeline_log['Pre-Extraction Functions'] = [get_fn_name(f) for f in self._pre_extraction_fns]
+        self._pipeline_log['Feature Extraction Function'] = get_fn_name(self._feature_extraction_fn)
+        self._pipeline_log['Post-Extraction Functions'] = [get_fn_name(f) for f in self._post_extraction_fns]
+
+        self._pipeline_log['Pipeline Settings'] = {
+            'Using spaCy': f'{self._use_spacy}',
+            'Batch Size': f'{self._batch_size}',
+        }
+
+        self._pipeline_log['Input Text Column Name'] = self._input_column_name
+        self._pipeline_log['Output Column Name'] = self._feature_column_name
+
+        self._pipeline_log['Start Time'] = str(datetime.datetime.now())
+
+    def _save_log(self):
+        self._pipeline_log['End Time'] = str(datetime.datetime.now())
+        with open(self._log_path, mode='w+') as fp:
+            try:
+                existing_log = json.load(fp)
+            except:
+                existing_log = None
+        
+            if existing_log is None:
+                json.dump(
+                    { self._run_name: self._pipeline_log }, 
+                    fp)
+            else:
+                existing_log[self._run_name] = self._pipeline_log
+                json.dump(existing_log, fp)
