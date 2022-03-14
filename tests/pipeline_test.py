@@ -1,4 +1,5 @@
 import math
+import os
 import unittest
 from pipeline import Pipeline
 import pandas as pd
@@ -26,7 +27,16 @@ class PipelineTests(unittest.TestCase):
         ]
         self.test_df = pd.DataFrame(test_data, columns=['test_col', 'm1', 'm2', 'm3', 'm4'])
         self.secondary_test_df = pd.DataFrame(test_secondary_data, columns=['a'])
+
+        self._log_path = './test_logs'
         return super().setUp()
+
+    def tearDown(self) -> None:
+        try:
+            os.remove(self._log_path)
+        except:
+            print('Error raised when deleting log file.')
+        return super().tearDown()
     
     @staticmethod
     def simple_extraction_fn(data):
@@ -54,7 +64,8 @@ class PipelineTests(unittest.TestCase):
             post_extraction_fns=post_extraction_fns,
             text_column_name='test_col',
             ngram_column_name='test_col',
-            batch_size=batch_size
+            batch_size=batch_size,
+            log_filepath=self._log_path
         )
         p.start([self.test_df.copy(deep=True)])
 
@@ -74,7 +85,8 @@ class PipelineTests(unittest.TestCase):
             post_extraction_fns=post_extraction_fns,
             text_column_name='test_col',
             ngram_column_name='test_col',
-            batch_size=batch_size
+            batch_size=batch_size,
+            log_filepath=self._log_path
         )
         p.start([self.test_df.copy(deep=True)])
 
@@ -100,7 +112,8 @@ class PipelineTests(unittest.TestCase):
             post_extraction_fns=post_extraction_fns,
             text_column_name='test_col',
             ngram_column_name='test_col',
-            batch_size=batch_size
+            batch_size=batch_size,
+            log_filepath=self._log_path
         )
         p.start([self.test_df.copy(deep=True)], [iter([self.secondary_test_df.copy(deep=True)])])
 
@@ -128,7 +141,8 @@ class PipelineTests(unittest.TestCase):
             text_column_name='text',
             ngram_column_name='text',
             batch_size=batch_size,
-            use_spacy=True
+            use_spacy=True,
+            log_filepath=self._log_path
         )
         p.start([test_text_df.copy(deep=True)])
 
@@ -141,7 +155,8 @@ class PipelineTests(unittest.TestCase):
             post_extraction_fns=[],
             text_column_name='',
             ngram_column_name='',
-            batch_size=batch_size
+            batch_size=batch_size,
+            log_filepath=self._log_path
         )
 
         res = p._split_df(self.test_df)
