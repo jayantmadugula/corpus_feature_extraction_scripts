@@ -1,6 +1,7 @@
 import json
 from multiprocessing import Pool
 import datetime
+import os
 from typing import Callable, Iterable, Iterator, List
 import pandas as pd
 from utilities.spacy_utilities import Spacy_Manager
@@ -132,19 +133,18 @@ class Pipeline():
 
     def _save_log(self):
         self._pipeline_log['End Time'] = str(datetime.datetime.now())
-        with open(self._log_path, mode='r') as fp:
-            try:
-                existing_log = json.load(fp)
-            except:
-                existing_log = dict()
-        
-            if existing_log is None:
+
+        if os.path.exists(self._log_path):
+            with open(self._log_path, mode='r+') as fp:
+                try:
+                    existing_log = json.load(fp)
+                except:
+                    existing_log = dict()
+                
                 existing_log[self._run_name] = self._pipeline_log
-                json.dump(
-                    existing_log, 
-                    fp)
-            else:
-                existing_log[self._run_name] = self._pipeline_log
+        else:
+            existing_log = dict()
+            existing_log[self._run_name] = self._pipeline_log
         
         with open(self._log_path, mode='w') as fp_w:
             json.dump(existing_log, fp_w)

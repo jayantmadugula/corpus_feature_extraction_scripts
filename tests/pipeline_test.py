@@ -28,7 +28,7 @@ class PipelineTests(unittest.TestCase):
         self.test_df = pd.DataFrame(test_data, columns=['test_col', 'm1', 'm2', 'm3', 'm4'])
         self.secondary_test_df = pd.DataFrame(test_secondary_data, columns=['a'])
 
-        self._log_path = './test_logs'
+        self._log_path = './test_logs.json'
         return super().setUp()
 
     def tearDown(self) -> None:
