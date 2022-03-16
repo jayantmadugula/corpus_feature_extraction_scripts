@@ -132,16 +132,19 @@ class Pipeline():
 
     def _save_log(self):
         self._pipeline_log['End Time'] = str(datetime.datetime.now())
-        with open(self._log_path, mode='w+') as fp:
+        with open(self._log_path, mode='r') as fp:
             try:
                 existing_log = json.load(fp)
             except:
-                existing_log = None
+                existing_log = dict()
         
             if existing_log is None:
+                existing_log[self._run_name] = self._pipeline_log
                 json.dump(
-                    { self._run_name: self._pipeline_log }, 
+                    existing_log, 
                     fp)
             else:
                 existing_log[self._run_name] = self._pipeline_log
-                json.dump(existing_log, fp)
+        
+        with open(self._log_path, mode='w') as fp_w:
+            json.dump(existing_log, fp_w)

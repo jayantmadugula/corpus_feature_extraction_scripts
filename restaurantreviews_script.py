@@ -39,7 +39,7 @@ if __name__ == '__main__':
     log_dict['ngram Size'] = f'{window_len}'
 
     log_dict['Pipeline Output'] = {
-        'Table Name', output_table_name
+        'Table Name': output_table_name
     }
     run_name = output_table_name
 
