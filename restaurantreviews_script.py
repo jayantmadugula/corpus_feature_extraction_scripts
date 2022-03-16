@@ -8,15 +8,34 @@ Beyond the stars: improving rating predictions using review text content.
 G Ganu, N Elhadad, A Marian. Proc. WebDB. 1-6. 2009.
 '''
 
+import argparse
 import json
 import sqlite3
 from functools import partial
-from utilities.database_utilities import load_df, save_df
+from utilities.database_utilities import load_df, save_df, remove_existing_table
 from processing_functions import ngram_generation, text_preprocessing as tp
 from pipeline import Pipeline
 
 
 if __name__ == '__main__':
+    # Parse command-line arguments.
+    parser = argparse.ArgumentParser(description='''
+        Normalizes, processes, and extracts ngrams from the RestaurantReviews dataset.
+        
+        The raw text data is expected to be saved to a SQLite3 database. Settings for this
+        scripts can be found in the "restaurant_reviews" section of `parameters.json`.
+        ''')
+    parser.add_argument(
+        'ngram_context_size', 
+        metavar='N', 
+        type=int, 
+        default=2,
+        nargs='?',
+        help='this size of the resulting ngrams will be 2 * N + 1')
+
+    args = parser.parse_args()
+    window_len =  args.ngram_context_size # len(ngram) = (2 * window_len) + 1
+    
     # Load parameters.
     with open('./parameters.json') as params_fp:
         params = json.load(params_fp)
@@ -27,8 +46,11 @@ if __name__ == '__main__':
     database_path = params['restaurant_reviews']['database_path']
     table_name = params['restaurant_reviews']['text_table_name']
 
-    window_len = 2 # len(ngram) = (2 * window_len) + 1
     output_table_name = f'restaurantreviews_n={window_len}'
+
+    # Remove pre-existing table if necessary.
+    conn = sqlite3.connect(database_path)
+    remove_existing_table(output_table_name, conn)
 
     # Logging
     log_dict = dict()
@@ -44,7 +66,6 @@ if __name__ == '__main__':
     run_name = output_table_name
 
     # Get data iterator.
-    conn = sqlite3.connect(database_path)
     sql_iter = load_df(conn, table_name, chunksize=batch_size)
     print(type(sql_iter))
 

@@ -26,3 +26,19 @@ def save_df(df: pd.DataFrame, conn: sqlite3.Connection, table_name: str):
     If the table already exists, it will be appended to.
     '''
     df.to_sql(table_name, conn, if_exists='append')
+
+def remove_existing_table(table_name: str, conn: sqlite3.Connection):
+    '''
+    Drops a table if it exists in the given SQLite3 database.
+    '''
+    sql_str = 'DROP TABLE "{}";'.format(table_name)
+    cur = conn.cursor()
+    try:
+        cur.execute(sql_str)
+        conn.commit()
+    except sqlite3.OperationalError as e:
+        err_message: str = e.args[0]
+        if 'no such table' in err_message:
+            print('The table does not already exist. Continuing without raising an exception.')
+        else:
+            raise e
