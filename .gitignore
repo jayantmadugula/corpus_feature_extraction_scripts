@@ -130,4 +130,6 @@ dmypy.json
 
 # VSCode
 .vscode/
+
+# Project-Specific
 pipeline_log.json
