@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     window_len =  args.ngram_context_size # len(ngram) = (2 * window_len) + 1
-    
+
     # Load parameters.
     with open('./parameters.json') as params_fp:
         params = json.load(params_fp)
@@ -67,7 +67,6 @@ if __name__ == '__main__':
 
     # Get data iterator.
     sql_iter = load_df(conn, table_name, chunksize=batch_size)
-    print(type(sql_iter))
 
     # Call Pipeline with data and processing functions.
     ngram_extraction_fn = partial(ngram_generation.generate_corpus_ngrams, col_name='review_spdocs', n=window_len)
