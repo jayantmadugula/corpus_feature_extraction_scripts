@@ -14,8 +14,9 @@ class NgramGenerationTests(unittest.TestCase):
         return super().setUp()
 
     def test_generate_corpus_ngrams(self):
-        result = ngram_generation.generate_corpus_ngrams(pd.Series(self.test_strings))
+        result = ngram_generation.generate_corpus_ngrams(pd.DataFrame({'test': self.test_docs}), 'test')
         assert(result.shape[0] == sum([len(x.split()) for x in self.test_strings]))
+        assert(result.shape[1] == 2)
         assert(result.index[0] == 0 and result.index[-1] == sum([len(x.split()) for x in self.test_strings]) - 1)
 
     def test_ngram_generation_at_position_no_padding(self):
