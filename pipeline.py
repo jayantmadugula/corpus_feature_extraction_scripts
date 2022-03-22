@@ -58,7 +58,6 @@ class Pipeline():
         
         # Run feature extraction function using multiprocessing.
         if self._use_spacy:
-            # TODO Investigate taking advantage of spaCy's Doc generator.
             docs_col_name = '{}_spdocs'.format(self._input_column_name)
             df.loc[:, docs_col_name] = list(Spacy_Manager.generate_docs(df.loc[:, self._input_column_name]))
         batched_dfs = self._split_df(df)
