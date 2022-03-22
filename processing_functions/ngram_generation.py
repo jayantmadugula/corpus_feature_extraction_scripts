@@ -3,16 +3,25 @@ These functions are used to create ngrams from
 a generic input text dataset.
 '''
 from spacy.tokens.doc import Doc as sp_Doc
-from utilities.spacy_utilities import Spacy_Manager
 import pandas as pd
+from processing_functions.featurization_helpers import generate_pos_tags
 
-def generate_corpus_ngrams(input_df: pd.DataFrame, col_name: str, n=2, pad_word='inv'):
+
+def generate_corpus_ngrams(input_df: pd.DataFrame, col_name: str, n=2, pad_word='inv', **kwargs):
     '''
     Manages ngram generation across a set of texts. These texts
     should be passed in as a `pd.Series` object.
 
-    Returns a `pd.Series` of ngrams. Each entry in the Series is a ngram. The id of the corresponding sentence is included. 
+    Returns a `pd.Series` of ngrams. Each entry in the Series is a ngram. 
+    The id of the corresponding sentence is included. 
     The number of these entries is equal to `len(texts)`.
+
+    `kwargs` supports two arguments:
+    1. `"pos_filter"`, which must be a list of valid parts-of-speech from spaCy,
+    will limit ngram creation to ngrams where the central "target" word has a
+    part-of-speech included in the provided list.
+    2. `"idx_filter"`, which must be an iterable containing valid indices, limits ngram
+    creation to the provided indices for each document.
 
     Return schema:
     - `ngram`
@@ -20,14 +29,44 @@ def generate_corpus_ngrams(input_df: pd.DataFrame, col_name: str, n=2, pad_word=
     extracted from
     '''
     sp_docs = input_df.loc[:, col_name]
+    
+    if 'pos_filter' in kwargs:
+        # Create part-of-speech filter and get indices at which the filter is valid.
+        pos_tags = generate_pos_tags(sp_docs, is_ngrams=False)
+        pos_idx_filter = _create_tag_filter(pos_tags, set(kwargs['pos_filter']))
+        zipped_ngram_iterator = zip(sp_docs, input_df.index, pos_idx_filter)
+    elif 'idx_filter' in kwargs:
+        # Simply use the existing index-based filter.
+        zipped_ngram_iterator = zip(sp_docs, input_df.index, kwargs['idx_filter'])
+    else:
+        zipped_ngram_iterator = zip(sp_docs, input_df.index)
 
+    # Calculate ngrams at valid indices.
     ngrams = []
-    for d, sent_id in zip(sp_docs, input_df.index):
-        text_ngrams = generate_ngrams(d, n=n, pad_word=pad_word, idx_filter=None)
+    for i in zipped_ngram_iterator:
+        if len(i) == 3:
+            d, sent_id, idx_filter = i
+        else:
+            d, sent_id = i
+            idx_filter = None
+
+        text_ngrams = generate_ngrams(d, n=n, pad_word=pad_word, idx_filter=idx_filter)
         sent_ids = [sent_id] * len(text_ngrams)
         ngrams.append(pd.DataFrame({'ngram': text_ngrams, 'sent_id': sent_ids}))
     
     return pd.concat(ngrams, ignore_index=True)
+
+def _create_tag_filter(tags, tag_filter):
+    '''
+    Returns a list of valid indices given a tag-based filter.
+    '''
+    texts_idx = []
+    for text_tags in tags:
+        idx = []
+        for i, pos in enumerate(text_tags):
+            if pos in tag_filter: idx.append(i)
+        texts_idx.append(idx)
+    return texts_idx
 
 def generate_ngrams(doc: sp_Doc, n=2, pad_word='inv', idx_filter=None) -> list[str]:
     '''
