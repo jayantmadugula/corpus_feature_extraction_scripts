@@ -1,5 +1,6 @@
 import unittest
 from processing_functions import ngram_generation
+from processing_functions.featurization_helpers import generate_pos_tags
 from utilities.spacy_utilities import Spacy_Manager
 import pandas as pd
 
@@ -15,10 +16,28 @@ class NgramGenerationTests(unittest.TestCase):
         return super().setUp()
 
     def test_generate_corpus_ngrams(self):
-        result = ngram_generation.generate_corpus_ngrams(pd.DataFrame({'test': self.test_docs}), 'test')
+        test_col_name = 'test'
+        test_df = pd.DataFrame({test_col_name: self.test_docs})
+
+        # Test without filtering.
+        result = ngram_generation.generate_corpus_ngrams(test_df, test_col_name)
         assert(result.shape[0] == sum([len(x.split()) for x in self.test_strings]))
         assert(result.shape[1] == 2)
         assert(result.index[0] == 0 and result.index[-1] == sum([len(x.split()) for x in self.test_strings]) - 1)
+
+        # Test with filtering.
+        test_idx_filter = [[0, 3, 4, 6, 7, 10, 13], [3, 4, 8], [0, 1, 2, 9, 11]]
+        idx_filter_result = ngram_generation.generate_corpus_ngrams(test_df, test_col_name, idx_filter=test_idx_filter)
+        assert(idx_filter_result.shape[0] == sum(len(x) for x in test_idx_filter))
+        assert(idx_filter_result.shape[1] == 2)
+        assert(idx_filter_result.index[0] == 0 and idx_filter_result.index[-1] == sum(len(x) for x in test_idx_filter) - 1)
+
+        # Test with PoS filtering.
+        test_pos_filter = ['NOUN', 'ADV', 'PRON']
+        pos_filter_result = ngram_generation.generate_corpus_ngrams(test_df, test_col_name, pos_filter=test_pos_filter)
+        assert(pos_filter_result.shape[0] <= sum([len(x.split()) for x in self.test_strings]))
+        assert(pos_filter_result.shape[1] == 2)
+        assert(pos_filter_result.index[0] == 0 and pos_filter_result.index[-1] <= sum([len(x.split()) for x in self.test_strings]) - 1)
 
     def test_ngram_generation_at_position_no_padding(self):
         result = ngram_generation.generate_ngram_at_position(self.test_docs[0], 3)
