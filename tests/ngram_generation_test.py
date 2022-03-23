@@ -1,6 +1,5 @@
 import unittest
 from processing_functions import ngram_generation
-from processing_functions.featurization_helpers import generate_pos_tags
 from utilities.spacy_utilities import Spacy_Manager
 import pandas as pd
 
