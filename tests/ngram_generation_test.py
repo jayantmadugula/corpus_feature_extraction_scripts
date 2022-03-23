@@ -5,10 +5,11 @@ import pandas as pd
 
 class NgramGenerationTests(unittest.TestCase):
     def setUp(self) -> None:
+        # test_strings from https://en.wikipedia.org/wiki/Lorem_ipsum
         self.test_strings = [
-            "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
-            "Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat",
-            "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur"
+            "In publishing and graphic design Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document or a typeface without relying on meaningful content",
+            "Lorem ipsum may be used as a placeholder before the final copy is available",
+            "It is also used to temporarily replace text in a process called greeking which allows designers to consider the form of a webpage or publication without the meaning of the text influencing the design"
         ]
         self.test_docs = list(Spacy_Manager.generate_docs(self.test_strings))
         return super().setUp()
@@ -21,21 +22,21 @@ class NgramGenerationTests(unittest.TestCase):
 
     def test_ngram_generation_at_position_no_padding(self):
         result = ngram_generation.generate_ngram_at_position(self.test_docs[0], 3)
-        expected = "ipsum dolor sit amet consectetur"
+        expected = "publishing and graphic design Lorem"
         assert(result == expected)
     
     def test_ngram_generation_at_position_with_padding(self):
         result = ngram_generation.generate_ngram_at_position(self.test_docs[0], 1)
-        expected = "inv Lorem ipsum dolor sit"
+        expected = "inv In publishing and graphic"
         assert(result == expected)
 
     def test_doc_ngram_generation(self):
         result = ngram_generation.generate_ngrams(self.test_docs[0])
         
         expected_ngrams = {
-            1: "inv Lorem ipsum dolor sit",
-            3: "ipsum dolor sit amet consectetur",
-            -1: "dolore magna aliqua inv inv"
+            1: "inv In publishing and graphic",
+            3: "publishing and graphic design Lorem",
+            -1: "on meaningful content inv inv"
         }
         
         assert(len(result) == len(self.test_strings[0].split()))
