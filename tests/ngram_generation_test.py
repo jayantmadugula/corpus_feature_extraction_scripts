@@ -12,6 +12,13 @@ class NgramGenerationTests(unittest.TestCase):
             "It is also used to temporarily replace text in a process called greeking which allows designers to consider the form of a webpage or publication without the meaning of the text influencing the design"
         ]
         self.test_docs = list(Spacy_Manager.generate_docs(self.test_strings))
+
+        self.test_metadata = [
+            1,
+            0,
+            -1
+        ]
+
         return super().setUp()
 
     def test_generate_corpus_ngrams(self):
@@ -37,6 +44,33 @@ class NgramGenerationTests(unittest.TestCase):
         assert(pos_filter_result.shape[0] <= sum([len(x.split()) for x in self.test_strings]))
         assert(pos_filter_result.shape[1] == 2)
         assert(pos_filter_result.index[0] == 0 and pos_filter_result.index[-1] <= sum([len(x.split()) for x in self.test_strings]) - 1)
+
+    def test_generate_corpus_ngrams_with_metadata(self):
+        test_col_name = 'test'
+        metadata_col_name = 'metadata_col'
+        test_df = pd.DataFrame({test_col_name: self.test_docs, metadata_col_name: self.test_metadata})
+
+        # Test with boolean parameter.
+        result = ngram_generation.generate_corpus_ngrams(test_df, test_col_name, include_metadata=True)
+        assert(result.shape[0] == sum([len(x.split()) for x in self.test_strings]))
+        assert(result.shape[1] == 3)
+        assert(result.index[0] == 0 and result.index[-1] == sum([len(x.split()) for x in self.test_strings]) - 1)
+
+        assert((result[result['sent_id'] == 0].loc[:,metadata_col_name] == 1).all())
+        assert((result[result['sent_id'] == 1].loc[:,metadata_col_name] == 0).all())
+        assert((result[result['sent_id'] == 2].loc[:,metadata_col_name] == -1).all())
+
+        # Test with list parameter.
+        result_metadata_list = ngram_generation.generate_corpus_ngrams(test_df, test_col_name, include_metadata=[metadata_col_name])
+        assert(result_metadata_list.shape[0] == sum([len(x.split()) for x in self.test_strings]))
+        assert(result_metadata_list.shape[1] == 3)
+        assert(result_metadata_list.index[0] == 0 and result_metadata_list.index[-1] == sum([len(x.split()) for x in self.test_strings]) - 1)
+
+        assert((result_metadata_list[result_metadata_list['sent_id'] == 0].loc[:,metadata_col_name] == 1).all())
+        assert((result_metadata_list[result_metadata_list['sent_id'] == 1].loc[:,metadata_col_name] == 0).all())
+        assert((result_metadata_list[result_metadata_list['sent_id'] == 2].loc[:,metadata_col_name] == -1).all())
+
+        assert(((result == result_metadata_list).all()).all())
 
     def test_ngram_generation_at_position_no_padding(self):
         result = ngram_generation.generate_ngram_at_position(self.test_docs[0], 3)
