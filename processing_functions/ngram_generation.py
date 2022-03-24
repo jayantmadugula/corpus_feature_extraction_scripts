@@ -16,12 +16,16 @@ def generate_corpus_ngrams(input_df: pd.DataFrame, col_name: str, n=2, pad_word=
     The id of the corresponding sentence is included. 
     The number of these entries is equal to `len(texts)`.
 
-    `kwargs` supports two arguments:
+    `kwargs` supports the following arguments:
     1. `"pos_filter"`, which must be a list of valid parts-of-speech from spaCy,
     will limit ngram creation to ngrams where the central "target" word has a
     part-of-speech included in the provided list.
     2. `"idx_filter"`, which must be an iterable containing valid indices, limits ngram
     creation to the provided indices for each document.
+    3. `"include_metadata"`, can either be a boolean or a list of column names. If
+    set to True, all columns, except `col_name` in `input_df` are joined to the returned
+    DataFrame. If a list of column names are provided, then only those columns are
+    joined with the returned DataFrame.
 
     Return schema:
     - `ngram`
@@ -54,7 +58,20 @@ def generate_corpus_ngrams(input_df: pd.DataFrame, col_name: str, n=2, pad_word=
         sent_ids = [sent_id] * len(text_ngrams)
         ngrams.append(pd.DataFrame({'ngram': text_ngrams, 'sent_id': sent_ids}))
     
-    return pd.concat(ngrams, ignore_index=True)
+    ngrams_df: pd.DataFrame = pd.concat(ngrams, ignore_index=True)
+    if 'include_metadata' in kwargs:
+        if type(kwargs['include_metadata']) == list:
+            metadata_cols = kwargs['include_metadata']
+            return ngrams_df.join(input_df.loc[:, metadata_cols], on='sent_id', how='inner')
+        elif kwargs['include_metadata'] == True:
+            metadata_cols = set(input_df.columns) - {col_name}
+            return ngrams_df.join(input_df.loc[:, metadata_cols], on='sent_id', how='inner')
+        elif kwargs['include_metadata'] == False:
+            return ngrams_df
+        else:
+            raise ValueError('The "include_metadata" parameter must be a list or boolean.')
+    
+    return ngrams_df
 
 def _create_tag_filter(tags, tag_filter):
     '''
