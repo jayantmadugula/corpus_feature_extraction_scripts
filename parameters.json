@@ -7,5 +7,23 @@
         "text_column_name": "review",
         "restaurant_id_column_name": "id",
         "pos_filter_list": ["ADV", "NOUN", "PRON", "PROPN", "VERB", "ADJ"]
+    },
+    "semeval16": {
+        "database_path": "../databases/corpus_database.db",
+        "text_table_name": "semeval16_reviews",
+        "text_column_name": "review",
+        "pos_filter_list": ["ADV", "NOUN", "PRON", "PROPN", "VERB", "ADJ"]
+    },
+    "socc": {
+        "database_path": "../databases/corpus_database.db",
+        "text_table_name": "socc_articles",
+        "text_column_name": "words",
+        "pos_filter_list": ["ADV", "NOUN", "PRON", "PROPN", "VERB", "ADJ"]
+    },
+    "sst": {
+        "database_path": "../databases/corpus_database.db",
+        "text_table_name": "sst_phrases",
+        "text_column_name": "phrase",
+        "pos_filter_list": ["ADV", "NOUN", "PRON", "PROPN", "VERB", "ADJ"]
     }
 }
