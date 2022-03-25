@@ -5,6 +5,7 @@
         "database_path": "../databases/corpus_database.db",
         "text_table_name": "restaurantreviews_reviews",
         "text_column_name": "review",
-        "restaurant_id_column_name": "id"
+        "restaurant_id_column_name": "id",
+        "pos_filter_list": ["ADV", "NOUN", "PRON", "PROPN", "VERB", "ADJ"]
     }
 }
