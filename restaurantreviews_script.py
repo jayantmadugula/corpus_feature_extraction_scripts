@@ -58,6 +58,7 @@ if __name__ == '__main__':
 
     database_path = params['restaurant_reviews']['database_path']
     table_name = params['restaurant_reviews']['text_table_name']
+    text_column_name = params['restaurant_reviews']['text_column_name']
 
     pos_filter = params['restaurant_reviews']['pos_filter_list']
     validate_spacy_pos(pos_filter)
@@ -91,13 +92,13 @@ if __name__ == '__main__':
     if use_pos_filtering:
         ngram_extraction_fn = partial(
             ngram_generation.generate_corpus_ngrams, 
-            col_name='review_spdocs', 
+            col_name=f'{text_column_name}_spdocs', 
             n=window_len,
             pos_filter=pos_filter)
     else:
         ngram_extraction_fn = partial(
             ngram_generation.generate_corpus_ngrams, 
-            col_name='review_spdocs', 
+            col_name=f'{text_column_name}_spdocs', 
             n=window_len)
     ngram_extraction_fn.__name__ = ngram_generation.generate_corpus_ngrams.__name__
 
@@ -113,7 +114,7 @@ if __name__ == '__main__':
         ],
         feature_extraction_fn=ngram_extraction_fn,
         post_extraction_fns=[],
-        text_column_name='review',
+        text_column_name=text_column_name,
         ngram_column_name='ngram',
         batch_size=batch_size,
         num_processes=n_processes,
