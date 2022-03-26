@@ -10,7 +10,8 @@ from processing_functions.featurization_helpers import generate_pos_tags
 def generate_corpus_ngrams(input_df: pd.DataFrame, col_name: str, n=2, pad_word='inv', **kwargs):
     '''
     Manages ngram generation across a set of texts. These texts
-    should be passed in as a `pd.Series` object.
+    should be passed in as a `pd.DataFrame` object. The texts must
+    be in a column named `col_name`.
 
     Returns a `pd.DataFrame` of ngrams. Each entry in the DataFrame is a ngram. 
     The id of the corresponding sentence is included. 
