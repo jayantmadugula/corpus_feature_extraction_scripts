@@ -12,7 +12,7 @@ def generate_corpus_ngrams(input_df: pd.DataFrame, col_name: str, n=2, pad_word=
     Manages ngram generation across a set of texts. These texts
     should be passed in as a `pd.Series` object.
 
-    Returns a `pd.Series` of ngrams. Each entry in the Series is a ngram. 
+    Returns a `pd.DataFrame` of ngrams. Each entry in the DataFrame is a ngram. 
     The id of the corresponding sentence is included. 
     The number of these entries is equal to `len(texts)`.
 
@@ -31,6 +31,7 @@ def generate_corpus_ngrams(input_df: pd.DataFrame, col_name: str, n=2, pad_word=
     - `ngram`
     - `sent_id`: the index of the sentence the ngram was 
     extracted from
+    - if requested, metadata columns (see above)
     '''
     sp_docs = input_df.loc[:, col_name]
     
