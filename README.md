@@ -16,3 +16,15 @@ Secondly, there are four Python script files in this repository. Each script is 
 
 ## Other Work
 The remaining work in this repository is the functions defined specifically for the four scripts, including an ngram generation function that is able to save correlated metadata alongside a newly generated ngram. `spaCy` is also used to help with part-of-speech tagging, allowing the ngram generation function to only create ngrams when the central word in the ngram has a specified tag. 
+
+## Required Packages
+This is (currently) not guaranteed to be an exhaustive list (sorry!). However, these are the main packages you'll need to install to run the included scripts and use `Pipeline`.
+
+Packages:
+
+- pandas
+- numpy
+- [spaCy](https://spacy.io/usage)
+- [NLTK](https://www.nltk.org/install.html)
+
+**Note**: After installing spaCy, please run `python -m spacy download en_core_web_lg`.
