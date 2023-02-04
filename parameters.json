@@ -1,6 +1,6 @@
 {
-    "num_processes": 4,
-    "batch_size": 1600,
+    "num_processes": 28,
+    "batch_size": 50000,
     "restaurant_reviews": {
         "database_path": "../databases/corpus_database.db",
         "text_table_name": "restaurantreviews_reviews",
