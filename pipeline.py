@@ -98,6 +98,7 @@ class Pipeline():
         self, 
         df_generator: Iterable[pd.DataFrame], 
         additional_df_generators: Iterable[Iterator[pd.DataFrame]] = []):
+        start_idx = 0
         for (i, current_df) in enumerate(df_generator):
             if len(additional_df_generators) > 0:
                 # Join all DataFrames by index
@@ -107,7 +108,10 @@ class Pipeline():
                     how='inner')
 
             processed_df = self._process(current_df)
+            processed_df.index = range(start_idx, start_idx + processed_df.shape[0])
+
             self._data_save_fn(processed_df)
+            start_idx += processed_df.shape[0]
 
             print(f'Pipeline step {i} complete.')
         
